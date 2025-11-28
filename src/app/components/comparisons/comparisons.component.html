@@ -1,0 +1,300 @@
+<div class="comparisons-container">
+  <header class="comparisons-header">
+    <h1>📊 Comparisons</h1>
+    <p>Compare sensor data by different criteria</p>
+  </header>
+
+  <div class="comparisons-content">
+    <!-- Comparison Type Tabs -->
+    <section class="comparison-tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="comparisonType === 'day-to-day'"
+        (click)="setComparisonType('day-to-day')">
+        📅 Day to Day
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="comparisonType === 'location'"
+        (click)="setComparisonType('location')">
+        🏢 Compare Locations
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="comparisonType === 'sensor-type'"
+        (click)="setComparisonType('sensor-type')">
+        📡 Compare Sensor Types
+      </button>
+    </section>
+
+    <!-- Day to Day Comparison -->
+    <section class="form-section" *ngIf="comparisonType === 'day-to-day'">
+      <form [formGroup]="comparisonForm" (ngSubmit)="compareDays()" class="comparison-form">
+        <div class="form-group">
+          <label for="date1">First Date (Day 1)</label>
+          <input 
+            type="date" 
+            id="date1" 
+            formControlName="date1" 
+            class="form-control"
+            [max]="comparisonForm.get('date2')?.value || ''"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="date2">Second Date (Day 2)</label>
+          <input 
+            type="date" 
+            id="date2" 
+            formControlName="date2" 
+            class="form-control"
+            [min]="comparisonForm.get('date1')?.value || ''"
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          class="btn-compare"
+          [disabled]="loading || !comparisonForm.valid"
+        >
+          <span *ngIf="!loading">🔍 Compare Days</span>
+          <span *ngIf="loading">⏳ Loading...</span>
+        </button>
+      </form>
+
+      <div *ngIf="error" class="error-message">
+        ⚠️ {{ error }}
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section *ngIf="comparisonData && !loading" class="results-section">
+      <!-- Summary Card -->
+      <div class="summary-card">
+        <h2>📈 Summary Comparison</h2>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">Date 1</span>
+            <span class="summary-value">{{ comparisonData.date1 }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Date 2</span>
+            <span class="summary-value">{{ comparisonData.date2 }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Total Sensors (Day 1)</span>
+            <span class="summary-value">{{ comparisonData.summary.totalSensorsDay1 }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Total Sensors (Day 2)</span>
+            <span class="summary-value">{{ comparisonData.summary.totalSensorsDay2 }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Average Value (Day 1)</span>
+            <span class="summary-value">{{ formatNumber(comparisonData.summary.averageValueDay1) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Average Value (Day 2)</span>
+            <span class="summary-value">{{ formatNumber(comparisonData.summary.averageValueDay2) }}</span>
+          </div>
+          <div class="summary-item highlight">
+            <span class="summary-label">Difference</span>
+            <span 
+              class="summary-value"
+              [style.color]="getTrendColor(comparisonData.summary.trend)"
+            >
+              {{ formatNumber(comparisonData.summary.difference) }}
+            </span>
+          </div>
+          <div class="summary-item highlight">
+            <span class="summary-label">Percentage Change</span>
+            <span 
+              class="summary-value"
+              [style.color]="getTrendColor(comparisonData.summary.trend)"
+            >
+              {{ formatPercentage(comparisonData.summary.percentageChange) }}
+              {{ getTrendIcon(comparisonData.summary.trend) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- By Sensor Type -->
+      <div class="sensor-type-comparison">
+        <h2>🔍 Comparison by Sensor Type</h2>
+        <div class="sensor-type-grid">
+          <div 
+            *ngFor="let item of comparisonData.bySensorType" 
+            class="sensor-type-card"
+          >
+            <h3>{{ item.sensorType | titlecase }}</h3>
+            <div class="sensor-type-details">
+              <div class="detail-row">
+                <span class="detail-label">Day 1 Average:</span>
+                <span class="detail-value">{{ formatNumber(item.day1Average) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Day 2 Average:</span>
+                <span class="detail-value">{{ formatNumber(item.day2Average) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Difference:</span>
+                <span 
+                  class="detail-value"
+                  [style.color]="item.difference >= 0 ? '#16C47F' : '#DB3A34'"
+                >
+                  {{ formatNumber(item.difference) }}
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Change:</span>
+                <span 
+                  class="detail-value"
+                  [style.color]="item.percentageChange >= 0 ? '#16C47F' : '#DB3A34'"
+                >
+                  {{ formatPercentage(item.percentageChange) }}
+                </span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Count (Day 1 / Day 2):</span>
+                <span class="detail-value">{{ item.day1Count }} / {{ item.day2Count }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw Data (Optional - can be collapsed) -->
+      <div class="raw-data-section">
+        <details>
+          <summary>📋 View Raw Data</summary>
+          <div class="raw-data-grid">
+            <div class="raw-data-column">
+              <h3>Day 1 Data</h3>
+              <div class="raw-data-list">
+                <div *ngFor="let item of comparisonData.day1Data" class="raw-data-item">
+                  <strong>{{ item.sensorId || item.sensor_id }}</strong> - 
+                  {{ item.type || item.Type }}: 
+                  <span class="value">{{ formatNumber(item.value || item.Value) }}</span>
+                  <span class="timestamp">{{ item.timestamp || item.Timestamp }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="raw-data-column">
+              <h3>Day 2 Data</h3>
+              <div class="raw-data-list">
+                <div *ngFor="let item of comparisonData.day2Data" class="raw-data-item">
+                  <strong>{{ item.sensorId || item.sensor_id }}</strong> - 
+                  {{ item.type || item.Type }}: 
+                  <span class="value">{{ formatNumber(item.value || item.Value) }}</span>
+                  <span class="timestamp">{{ item.timestamp || item.Timestamp }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- Location Comparison -->
+    <section class="form-section" *ngIf="comparisonType === 'location'">
+      <h2>🏢 Compare Locations</h2>
+      <div class="location-comparison-form">
+        <div class="form-group">
+          <label>Location 1</label>
+          <select #loc1 class="form-control">
+            <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location 2</label>
+          <select #loc2 class="form-control">
+            <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+          </select>
+        </div>
+        <button class="btn-compare" (click)="compareLocations(loc1.value, loc2.value)" [disabled]="loading">
+          <span *ngIf="!loading">🔍 Compare Locations</span>
+          <span *ngIf="loading">⏳ Loading...</span>
+        </button>
+      </div>
+
+      <div *ngIf="locationComparisonData && !loading" class="location-comparison-results">
+        <h3>Comparison Results</h3>
+        <div class="comparison-grid">
+          <div class="comparison-item">
+            <span class="label">Avg Temperature:</span>
+            <span class="value">{{ locationComparisonData.comparison.avgTemperature.loc1 }}°C vs {{ locationComparisonData.comparison.avgTemperature.loc2 }}°C</span>
+            <span class="diff" [style.color]="locationComparisonData.comparison.avgTemperature.difference >= 0 ? '#16C47F' : '#DB3A34'">
+              {{ locationComparisonData.comparison.avgTemperature.difference >= 0 ? '+' : '' }}{{ locationComparisonData.comparison.avgTemperature.difference }}°C
+            </span>
+          </div>
+          <div class="comparison-item">
+            <span class="label">Avg Humidity:</span>
+            <span class="value">{{ locationComparisonData.comparison.avgHumidity.loc1 }}% vs {{ locationComparisonData.comparison.avgHumidity.loc2 }}%</span>
+            <span class="diff" [style.color]="locationComparisonData.comparison.avgHumidity.difference >= 0 ? '#16C47F' : '#DB3A34'">
+              {{ locationComparisonData.comparison.avgHumidity.difference >= 0 ? '+' : '' }}{{ locationComparisonData.comparison.avgHumidity.difference }}%
+            </span>
+          </div>
+          <div class="comparison-item">
+            <span class="label">Sensor Count:</span>
+            <span class="value">{{ locationComparisonData.comparison.sensorCount.loc1 }} vs {{ locationComparisonData.comparison.sensorCount.loc2 }}</span>
+            <span class="diff" [style.color]="locationComparisonData.comparison.sensorCount.difference >= 0 ? '#16C47F' : '#DB3A34'">
+              {{ locationComparisonData.comparison.sensorCount.difference >= 0 ? '+' : '' }}{{ locationComparisonData.comparison.sensorCount.difference }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sensor Type Comparison -->
+    <section class="form-section" *ngIf="comparisonType === 'sensor-type'">
+      <h2>📡 Compare Sensor Types</h2>
+      <div class="sensor-type-comparison-form">
+        <div class="form-group">
+          <label>Sensor Type 1</label>
+          <select #type1 class="form-control">
+            <option *ngFor="let type of sensorTypes" [value]="type">{{ type | titlecase }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sensor Type 2</label>
+          <select #type2 class="form-control">
+            <option *ngFor="let type of sensorTypes" [value]="type">{{ type | titlecase }}</option>
+          </select>
+        </div>
+        <button class="btn-compare" (click)="compareSensorTypes(type1.value, type2.value)" [disabled]="loading">
+          <span *ngIf="!loading">🔍 Compare Types</span>
+          <span *ngIf="loading">⏳ Loading...</span>
+        </button>
+      </div>
+
+      <div *ngIf="sensorTypeComparisonData && !loading" class="sensor-type-comparison-results">
+        <h3>Comparison Results</h3>
+        <div class="comparison-grid">
+          <div class="comparison-item">
+            <span class="label">Avg Value:</span>
+            <span class="value">{{ sensorTypeComparisonData.comparison.avgValue.type1 }} vs {{ sensorTypeComparisonData.comparison.avgValue.type2 }}</span>
+            <span class="diff" [style.color]="sensorTypeComparisonData.comparison.avgValue.difference >= 0 ? '#16C47F' : '#DB3A34'">
+              {{ sensorTypeComparisonData.comparison.avgValue.difference >= 0 ? '+' : '' }}{{ sensorTypeComparisonData.comparison.avgValue.difference }}
+            </span>
+          </div>
+          <div class="comparison-item">
+            <span class="label">Sensor Count:</span>
+            <span class="value">{{ sensorTypeComparisonData.comparison.sensorCount.type1 }} vs {{ sensorTypeComparisonData.comparison.sensorCount.type2 }}</span>
+            <span class="diff" [style.color]="sensorTypeComparisonData.comparison.sensorCount.difference >= 0 ? '#16C47F' : '#DB3A34'">
+              {{ sensorTypeComparisonData.comparison.sensorCount.difference >= 0 ? '+' : '' }}{{ sensorTypeComparisonData.comparison.sensorCount.difference }}
+            </span>
+          </div>
+          <div class="comparison-item">
+            <span class="label">Data Points:</span>
+            <span class="value">{{ sensorTypeComparisonData.comparison.dataPoints.type1 }} vs {{ sensorTypeComparisonData.comparison.dataPoints.type2 }}</span>
+            <span class="diff" [style.color]="sensorTypeComparisonData.comparison.dataPoints.difference >= 0 ? '#16C47F' : '#DB3A34'">
+              {{ sensorTypeComparisonData.comparison.dataPoints.difference >= 0 ? '+' : '' }}{{ sensorTypeComparisonData.comparison.dataPoints.difference }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+

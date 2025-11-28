@@ -1,0 +1,166 @@
+<div class="reports-container" (click)="closeExportMenu()">
+  <header class="reports-header">
+    <div class="header-content">
+      <div>
+        <h1>📊 Reports & Analytics</h1>
+        <p class="subtitle">Comprehensive sensor data reports and insights</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="goToDashboard()">← Dashboard</button>
+        <div class="export-menu-container">
+          <button 
+            class="btn-primary" 
+            (click)="toggleExportMenu(); $event.stopPropagation()"
+            [disabled]="exportLoading">
+            <span *ngIf="!exportLoading">📥 Export Report</span>
+            <span *ngIf="exportLoading">⏳ Exporting...</span>
+          </button>
+          <div class="export-menu" *ngIf="showExportMenu" (click)="$event.stopPropagation()" (mouseleave)="closeExportMenu()">
+            <button class="export-option" (click)="exportReport('pdf')">
+              📄 Export as PDF
+            </button>
+            <button class="export-option" (click)="exportReport('excel')">
+              📊 Export as Excel (CSV)
+            </button>
+            <button class="export-option" (click)="exportReport('json')">
+              📋 Export as JSON
+            </button>
+          </div>
+        </div>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="reports-main">
+    <!-- Period Selector -->
+    <section class="period-selector">
+      <h3>Select Period:</h3>
+      <div class="period-buttons">
+        <button 
+          *ngFor="let period of periods" 
+          [class.active]="selectedPeriod === period.value"
+          (click)="onPeriodChange(period.value)"
+          class="period-btn">
+          {{ period.label }}
+        </button>
+      </div>
+    </section>
+
+    <!-- Summary Reports -->
+    <section class="summary-reports">
+      <h2 class="section-title">Summary Reports</h2>
+      <div class="reports-grid">
+        <div class="report-card" *ngFor="let report of reports" [style.border-left-color]="report.color">
+          <div class="report-header">
+            <div class="report-icon" [style.background]="report.color + '20'">
+              <span>{{ report.icon }}</span>
+            </div>
+            <div class="report-info">
+              <h3>{{ report.title }}</h3>
+              <p class="report-period">{{ report.period }}</p>
+            </div>
+          </div>
+          <div class="report-body">
+            <div class="report-value">{{ report.value }}</div>
+            <div class="report-trend" [class.positive]="isPositiveTrend(report.trend)">
+              <span>{{ report.trend }}</span>
+              <span class="trend-arrow">{{ getTrendArrow(report.trend) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <div class="chart-section">
+        <h2 class="section-title">📊 Sensor Data Trend (Bar Chart)</h2>
+        <div class="chart-container">
+          <div class="chart-wrapper">
+            <div class="chart-bars">
+              <div 
+                *ngFor="let value of chartData.values; let i = index" 
+                class="chart-bar"
+                [style.height]="getBarHeight(value)"
+                [style.background]="getBarColor(i)">
+                <span class="bar-value">{{ value }}</span>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <span *ngFor="let label of chartData.labels" class="chart-label">{{ label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <h2 class="section-title">🌡️ Temperature Over Time (Line Chart)</h2>
+        <div class="chart-container">
+          <div class="chart-wrapper line-chart">
+            <div class="line-chart-container">
+              <svg class="line-chart-svg" viewBox="0 0 700 200">
+                <polyline
+                  [attr.points]="getTemperatureLinePoints()"
+                  fill="none"
+                  stroke="#0A4D68"
+                  stroke-width="3"
+                />
+                <circle
+                  *ngFor="let value of temperatureChartData.values; let i = index"
+                  [attr.cx]="getTemperatureX(i)"
+                  [attr.cy]="getTemperatureY(value, i)"
+                  r="5"
+                  fill="#088395"
+                />
+              </svg>
+              <div class="chart-labels">
+                <span *ngFor="let label of temperatureChartData.labels" class="chart-label">{{ label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sensor Data Table -->
+    <section class="sensor-table-section">
+      <h2 class="section-title">Sensor Data Details</h2>
+      <div class="table-container">
+        <table class="sensor-table">
+          <thead>
+            <tr>
+              <th>Sensor ID</th>
+              <th>Type</th>
+              <th>Value</th>
+              <th>Location</th>
+              <th>Timestamp</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sensor of sensorReports; let i = index">
+              <td>{{ sensor.sensorId || 'N/A' }}</td>
+              <td>
+                <span class="sensor-type" [style.background]="getSensorTypeColor(sensor.sensorType)">
+                  {{ sensor.sensorType || 'Unknown' }}
+                </span>
+              </td>
+              <td class="sensor-value">{{ sensor.value || 0 }}</td>
+              <td>{{ sensor.location || 'N/A' }}</td>
+              <td>{{ formatTimestamp(sensor.timestamp) }}</td>
+              <td>
+                <span class="status-badge" [class.active]="isEven(i)">
+                  {{ isEven(i) ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="sensorReports.length === 0">
+              <td colspan="6" class="no-data">No sensor data available</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
