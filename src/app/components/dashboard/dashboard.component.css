@@ -81,20 +81,6 @@
   font-size: 14px;
 }
 
-.btn-reports,
-.btn-comparisons {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
-}
 
 .btn-reports:hover,
 .btn-comparisons:hover {
@@ -626,6 +612,21 @@
   border-color: rgba(255, 255, 255, 0.8);
 }
 
+.btn-reports,
+.btn-comparisons {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-header {
@@ -739,3 +740,4 @@
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 }
+

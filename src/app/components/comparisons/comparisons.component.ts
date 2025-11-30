@@ -188,6 +188,16 @@ export class ComparisonsComponent implements OnInit {
         trend: 'increasing'
       },
       bySensorType: [
+        
+        {
+          sensorType: 'humidity',
+          day1Count: 38,
+          day1Average: 62.0,
+          day2Count: 39,
+          day2Average: 63.5,
+          difference: 1.5,
+          percentageChange: 2.42
+        },
         {
           sensorType: 'temperature',
           day1Count: 45,
@@ -197,15 +207,6 @@ export class ComparisonsComponent implements OnInit {
           difference: 0.7,
           percentageChange: 2.86
         },
-        {
-          sensorType: 'humidity',
-          day1Count: 38,
-          day1Average: 62.0,
-          day2Count: 39,
-          day2Average: 63.5,
-          difference: 1.5,
-          percentageChange: 2.42
-        }
       ],
       day1Data: [
         { sensorId: 'sensor001', type: 'temperature', value: 24.5, timestamp: `${date1}T12:00:00Z` }
